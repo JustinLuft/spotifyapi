@@ -21,10 +21,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const tokenRes = await axios.post('https://accounts.spotify.com/api/token', params, { headers });
     const data = tokenRes.data;
 
-    // Here you can save data to Firebase if you want
-    // e.g., saveTopTracks(userId, data);
-
-    res.status(200).json(data);
+    // Redirect to dashboard and include token in query string (so client can store it)
+    const redirectUrl = `/dashboard?access_token=${data.access_token}`;
+    res.redirect(redirectUrl);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to get access token' });

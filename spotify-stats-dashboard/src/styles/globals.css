@@ -1,23 +1,53 @@
-body {
-  font-family: Arial, sans-serif;
-  margin: 0;
-  padding: 0;
-  background-color: #f5f5f5;
-}
-
-h1 {
+/* Home page container */
+.home-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background: radial-gradient(circle at top left, #0f0c29, #302b63, #24243e);
+  color: #000000;
+  font-family: 'Courier New', monospace;
   text-align: center;
 }
 
-button {
-  background-color: #1DB954;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  cursor: pointer;
-  font-size: 16px;
+/* Page title */
+.home-container h1 {
+  font-size: 3rem;
+  color: #00ff5e;
+  text-shadow: 0 0 10px #00ff4496, 0 0 20px #00ffea;
+  margin-bottom: 20px;
 }
 
-button:hover {
-  background-color: #17a74a;
+/* Subtitle */
+.home-container p {
+  font-size: 1.2rem;
+  color: #a0f0ff;
+  text-shadow: 0 0 5px #00ffea;
+  margin-bottom: 40px;
+}
+
+/* Spotify login button */
+.btn-login {
+  padding: 15px 40px;
+  font-size: 1.2rem;
+  background-color: #0ceb52;
+  color: #0d0d0d;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: bold;
+  box-shadow: 0 0 20px #000000;
+  transition: all 0.3s ease;
+}
+
+.btn-login:hover {
+  background-color: #15ff00;
+  box-shadow: 0 0 40px #00ff37, 0 0 60px #00ffe0;
+  transform: scale(1.05);
+}
+
+.btn-login:active {
+  transform: scale(0.95);
+  box-shadow: 0 0 15px #00ffea;
 }
