@@ -12,17 +12,31 @@ export default function HomePage() {
     if (!canvas) return;
     
     const ctx = canvas.getContext('2d');
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    if (!ctx) return;
+    
+    const setCanvasSize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    
+    setCanvasSize();
 
-    // Particle system
-    const particles = [];
-    const particleCount = 80;
-
+    // Particle class definition
     class Particle {
-      constructor() {
-        this.x = Math.random() * canvas.width;
-        this.y = Math.random() * canvas.height;
+      x: number;
+      y: number;
+      size: number;
+      speedX: number;
+      speedY: number;
+      opacity: number;
+      canvasWidth: number;
+      canvasHeight: number;
+
+      constructor(canvasWidth: number, canvasHeight: number) {
+        this.canvasWidth = canvasWidth;
+        this.canvasHeight = canvasHeight;
+        this.x = Math.random() * canvasWidth;
+        this.y = Math.random() * canvasHeight;
         this.size = Math.random() * 2 + 0.5;
         this.speedX = Math.random() * 0.5 - 0.25;
         this.speedY = Math.random() * 0.5 - 0.25;
@@ -33,30 +47,37 @@ export default function HomePage() {
         this.x += this.speedX;
         this.y += this.speedY;
 
-        if (this.x > canvas.width) this.x = 0;
-        if (this.x < 0) this.x = canvas.width;
-        if (this.y > canvas.height) this.y = 0;
-        if (this.y < 0) this.y = canvas.height;
+        if (this.x > this.canvasWidth) this.x = 0;
+        if (this.x < 0) this.x = this.canvasWidth;
+        if (this.y > this.canvasHeight) this.y = 0;
+        if (this.y < 0) this.y = this.canvasHeight;
       }
 
-      draw() {
-        ctx.fillStyle = `rgba(29, 185, 84, ${this.opacity})`;
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        ctx.fill();
+      draw(context: CanvasRenderingContext2D) {
+        context.fillStyle = `rgba(29, 185, 84, ${this.opacity})`;
+        context.beginPath();
+        context.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        context.fill();
       }
     }
+
+    // Particle system
+    const particles: Particle[] = [];
+    const particleCount = 80;
 
     for (let i = 0; i < particleCount; i++) {
-      particles.push(new Particle());
+      particles.push(new Particle(canvas.width, canvas.height));
     }
 
+    let animationFrameId: number;
+
     function animate() {
+      if (!ctx || !canvas) return;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       
       particles.forEach(particle => {
         particle.update();
-        particle.draw();
+        particle.draw(ctx);
       });
 
       // Draw connections
@@ -77,18 +98,24 @@ export default function HomePage() {
         });
       });
 
-      requestAnimationFrame(animate);
+      animationFrameId = requestAnimationFrame(animate);
     }
 
     animate();
 
     const handleResize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      setCanvasSize();
+      particles.length = 0;
+      for (let i = 0; i < particleCount; i++) {
+        particles.push(new Particle(canvas.width, canvas.height));
+      }
     };
 
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      cancelAnimationFrame(animationFrameId);
+    };
   }, []);
 
   return (
@@ -255,7 +282,7 @@ export default function HomePage() {
             backgroundClip: 'text',
             filter: 'drop-shadow(0 0 30px rgba(29, 185, 84, 0.5))'
           }}>
-            DATAGRABBER
+            Spotilite
           </h1>
 
           {/* Decorative Underline */}
@@ -286,7 +313,7 @@ export default function HomePage() {
             color: '#1DB954',
             textShadow: '0 0 20px rgba(29, 185, 84, 0.4)'
           }}>
-            Your Personal Spotify Chronicle
+            Spotify Datafinder
           </p>
 
           {/* Central Diamond Ornament */}
@@ -309,7 +336,7 @@ export default function HomePage() {
             lineHeight: 1.8,
             fontWeight: 300
           }}>
-            Discover your most cherished artists and tracks from the golden age of your musical journey
+            Find your spofiy account information at the click of a button.
           </p>
 
           {/* Button with Art Deco Frame */}
