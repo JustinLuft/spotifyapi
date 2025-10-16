@@ -30,12 +30,6 @@ A modern, interactive dashboard to explore your Spotify listening habits. Visual
 
 ---
 
-## Demo
-
-> Add a GIF or screenshot of your app here  
-
----
-
 ## Installation
 
 1. Clone the repo:
@@ -88,7 +82,7 @@ SPOTIFY_CLIENT_SECRET=your_spotify_client_secret
 ## Folder Structure
 
 
-'''
+```
 spotify-stats-dashboard/
 ├─ app/
 │ ├─ page.tsx # Main landing page
@@ -103,7 +97,7 @@ spotify-stats-dashboard/
 ├─ .gitignore
 ├─ package.json
 └─ README.md
-'''
+```
 
 ---
 
