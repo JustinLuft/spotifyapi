@@ -12,6 +12,21 @@ export default function DashboardPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+  return (
+    <div className="text-[#1DB954] p-10">
+      Loading dashboard...
+    </div>
+  );
+}
+
+
 
   useEffect(() => {
     const canvas = canvasRef.current;
