@@ -19,8 +19,9 @@ export default function CallbackPage() {
     console.log('Spotify auth code:', code);
 
     // Exchange code for token via backend
-    axios.get(`/api/spotify/callback?code=${code}`)
-      .then(res => {
+    axios
+      .get(`/api/spotify/callback?code=${code}`)
+      .then((res) => {
         const { access_token } = res.data;
         console.log('Spotify token data:', res.data);
 
@@ -33,10 +34,39 @@ export default function CallbackPage() {
 
         router.push('/top-tracks'); // redirect to dashboard
       })
-      .catch(err => {
+      .catch((err) => {
         console.error('Failed to get access token', err);
       });
   }, [router]);
 
-  return <p>Logging you in...</p>;
+  return (
+    <div className="flex flex-col items-center justify-center h-screen bg-[#0e1a12] text-[#1DB954] font-mono">
+      <div className="relative text-center">
+        {/* Glowing Deco Frame */}
+        <div className="absolute inset-0 border-2 border-[#1DB954]/30 rounded-2xl blur-sm"></div>
+
+        <div className="relative z-10 p-10 bg-[#0e1a12]/80 rounded-2xl shadow-[0_0_20px_#1DB95455]">
+          <h1 className="text-2xl md:text-3xl font-bold mb-4 tracking-widest">
+            CONNECTING TO SPOTIFY
+          </h1>
+          <p className="text-[#a7ffcb] text-sm md:text-base animate-pulse">
+            Logging you in securely...
+          </p>
+
+          {/* Loading animation */}
+          <div className="mt-8 flex justify-center">
+            <div className="w-6 h-6 border-2 border-[#1DB954] border-t-transparent rounded-full animate-spin"></div>
+          </div>
+
+          {/* Deco corner */}
+          <svg
+            className="absolute top-2 right-2 w-5 h-5 opacity-30"
+            viewBox="0 0 15 15"
+          >
+            <path d="M0,0 L15,0 L15,1 L1,1 L1,15 L0,15 Z" fill="#1DB954" />
+          </svg>
+        </div>
+      </div>
+    </div>
+  );
 }

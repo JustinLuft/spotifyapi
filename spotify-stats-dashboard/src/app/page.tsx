@@ -282,7 +282,7 @@ export default function HomePage() {
             backgroundClip: 'text',
             filter: 'drop-shadow(0 0 30px rgba(29, 185, 84, 0.5))'
           }}>
-            Spotilite
+            SpotLight
           </h1>
 
           {/* Decorative Underline */}

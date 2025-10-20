@@ -6,7 +6,10 @@ import axios from 'axios';
 
 export default function DashboardPage() {
   const [topTracks, setTopTracks] = useState<any[]>([]);
+  const [topArtists, setTopArtists] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeView, setActiveView] = useState<'tracks' | 'artists'>('tracks');
+  const [timeRange, setTimeRange] = useState<'short_term' | 'medium_term' | 'long_term'>('medium_term');
   const searchParams = useSearchParams();
   const router = useRouter();
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -101,7 +104,7 @@ export default function DashboardPage() {
     };
   }, []);
 
-  useEffect(() => {
+ useEffect(() => {
     if (!searchParams) return;
 
     const tokenFromQuery = searchParams.get('access_token');
@@ -119,19 +122,55 @@ export default function DashboardPage() {
       return;
     }
 
-    axios.get('/api/top-tracks', {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-    .then(res => {
-      console.log('Top tracks response:', res.data);
-      setTopTracks(res.data);
-      setLoading(false);
-    })
-    .catch(err => {
-      console.error(err);
-      setLoading(false);
-    });
-  }, [searchParams, router]);
+    const fetchData = async () => {
+      try {
+        const [tracksRes, artistsRes] = await Promise.all([
+          axios.get(`/api/top-tracks?time_range=${timeRange}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          axios.get(`/api/top-artists?time_range=${timeRange}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+        ]);
+
+        console.log('Top tracks response:', tracksRes.data);
+        console.log('Top artists response:', artistsRes.data);
+        
+        setTopTracks(tracksRes.data);
+        setTopArtists(artistsRes.data);
+        setLoading(false);
+      } catch (err) {
+        console.error(err);
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [searchParams, router, timeRange]);
+
+
+  const getTimeRangeLabel = (range: string) => {
+    switch (range) {
+      case 'short_term': return 'Last 4 Weeks';
+      case 'medium_term': return 'Last 6 Months';
+      case 'long_term': return 'All Time';
+      default: return '';
+    }
+  };
+
+  const formatDuration = (ms: number) => {
+    const minutes = Math.floor(ms / 60000);
+    const seconds = Math.floor((ms % 60000) / 1000);
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  const getTotalPlaytime = () => {
+    if (topTracks.length === 0) return '0:00';
+    const total = topTracks.reduce((acc, track) => acc + (track.duration_ms || 0), 0);
+    const hours = Math.floor(total / 3600000);
+    const minutes = Math.floor((total % 3600000) / 60000);
+    return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+  };
 
   return (
     <>
@@ -157,7 +196,23 @@ export default function DashboardPage() {
           text-transform: uppercase;
         }
         
-        .track-item {
+        .stat-card {
+          font-family: 'Cormorant Garamond', serif;
+          background: rgba(0, 0, 0, 0.5);
+          border: 1px solid rgba(29, 185, 84, 0.3);
+          padding: 25px;
+          clip-path: polygon(2% 0%, 98% 0%, 100% 2%, 100% 98%, 98% 100%, 2% 100%, 0% 98%, 0% 2%);
+          transition: all 0.3s ease;
+        }
+        
+        .stat-card:hover {
+          background: rgba(0, 0, 0, 0.7);
+          border-color: rgba(29, 185, 84, 0.6);
+          transform: translateY(-3px);
+          box-shadow: 0 10px 30px rgba(29, 185, 84, 0.2);
+        }
+        
+        .item-card {
           font-family: 'Cormorant Garamond', serif;
           background: rgba(0, 0, 0, 0.4);
           border: 1px solid rgba(29, 185, 84, 0.2);
@@ -168,14 +223,14 @@ export default function DashboardPage() {
           transition: all 0.3s ease;
         }
         
-        .track-item:hover {
+        .item-card:hover {
           background: rgba(0, 0, 0, 0.6);
           border-color: rgba(29, 185, 84, 0.5);
           transform: translateX(5px);
           box-shadow: -5px 0 20px rgba(29, 185, 84, 0.2);
         }
         
-        .track-name {
+        .item-name {
           font-size: 1.3rem;
           font-weight: 600;
           color: #1DB954;
@@ -183,13 +238,13 @@ export default function DashboardPage() {
           text-shadow: 0 0 10px rgba(29, 185, 84, 0.3);
         }
         
-        .track-artists {
+        .item-subtitle {
           font-size: 1.1rem;
           color: #b8b8b8;
           font-weight: 300;
         }
         
-        .track-number {
+        .item-number {
           position: absolute;
           left: -40px;
           top: 50%;
@@ -198,6 +253,53 @@ export default function DashboardPage() {
           font-size: 2rem;
           font-weight: 700;
           color: rgba(29, 185, 84, 0.3);
+        }
+        
+        .custom-select {
+          font-family: 'Cormorant Garamond', serif;
+          background: rgba(0, 0, 0, 0.6);
+          border: 1px solid rgba(29, 185, 84, 0.4);
+          color: #1DB954;
+          padding: 12px 20px;
+          font-size: 1.1rem;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          clip-path: polygon(1% 0%, 99% 0%, 100% 1%, 100% 99%, 99% 100%, 1% 100%, 0% 99%, 0% 1%);
+        }
+        
+        .custom-select:hover {
+          background: rgba(0, 0, 0, 0.8);
+          border-color: rgba(29, 185, 84, 0.7);
+        }
+        
+        .custom-select option {
+          background: #000;
+          color: #1DB954;
+        }
+        
+        .view-button {
+          font-family: 'Cormorant Garamond', serif;
+          background: rgba(0, 0, 0, 0.6);
+          border: 1px solid rgba(29, 185, 84, 0.4);
+          color: #b8b8b8;
+          padding: 12px 30px;
+          font-size: 1.1rem;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          clip-path: polygon(1% 0%, 99% 0%, 100% 1%, 100% 99%, 99% 100%, 1% 100%, 0% 99%, 0% 1%);
+        }
+        
+        .view-button.active {
+          background: rgba(29, 185, 84, 0.2);
+          border-color: rgba(29, 185, 84, 0.8);
+          color: #1DB954;
+          box-shadow: 0 0 20px rgba(29, 185, 84, 0.3);
+        }
+        
+        .view-button:hover {
+          background: rgba(29, 185, 84, 0.15);
+          border-color: rgba(29, 185, 84, 0.6);
+          color: #1DB954;
         }
         
         .loading-text {
@@ -213,7 +315,6 @@ export default function DashboardPage() {
         }
       `}</style>
 
-      {/* Particle Canvas */}
       <canvas 
         ref={canvasRef} 
         style={{
@@ -227,7 +328,6 @@ export default function DashboardPage() {
         }}
       />
 
-      {/* Grain Texture */}
       <div className="grain-texture"></div>
 
       <div style={{
@@ -237,7 +337,6 @@ export default function DashboardPage() {
         position: 'relative',
         padding: '80px 20px 60px'
       }}>
-        {/* Decorative Background Elements */}
         <div style={{
           position: 'absolute',
           top: '100px',
@@ -258,9 +357,8 @@ export default function DashboardPage() {
           position: 'relative',
           zIndex: 10
         }}>
-          {/* Header Section */}
-          <div style={{ textAlign: 'center', marginBottom: '60px' }}>
-            {/* Top Ornament */}
+          {/* Header */}
+          <div style={{ textAlign: 'center', marginBottom: '50px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '20px', marginBottom: '30px' }}>
               <div style={{ height: '1px', width: '80px', background: 'linear-gradient(to right, transparent, #1DB954)' }}></div>
               <svg width="25" height="25" viewBox="0 0 25 25">
@@ -279,10 +377,9 @@ export default function DashboardPage() {
               backgroundClip: 'text',
               filter: 'drop-shadow(0 0 30px rgba(29, 185, 84, 0.4))'
             }}>
-              Your Top Tracks
+              Music Overview
             </h1>
 
-            {/* Decorative Underline */}
             <div style={{
               height: '2px',
               width: '250px',
@@ -304,6 +401,59 @@ export default function DashboardPage() {
             </div>
           </div>
 
+          {/* Overview Stats */}
+          {!loading && (topTracks.length > 0 || topArtists.length > 0) && (
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+              gap: '20px',
+              marginBottom: '50px',
+              padding: '0 10px'
+            }}>
+            
+              
+             
+            </div>
+          )}
+
+          {/* Controls */}
+          <div style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '20px',
+            marginBottom: '40px',
+            padding: '0 20px',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            {/* View Toggle */}
+            <div style={{ display: 'flex', gap: '15px' }}>
+              <button
+                className={`view-button ${activeView === 'tracks' ? 'active' : ''}`}
+                onClick={() => setActiveView('tracks')}
+              >
+                Top Tracks
+              </button>
+              <button
+                className={`view-button ${activeView === 'artists' ? 'active' : ''}`}
+                onClick={() => setActiveView('artists')}
+              >
+                Top Artists
+              </button>
+            </div>
+
+            {/* Time Range Selector */}
+            <select
+              className="custom-select"
+              value={timeRange}
+              onChange={(e) => setTimeRange(e.target.value as any)}
+            >
+              <option value="short_term">Last 4 Weeks</option>
+              <option value="medium_term">Last 6 Months</option>
+              <option value="long_term">All Time</option>
+            </select>
+          </div>
+
           {/* Loading State */}
           {loading && (
             <div style={{ textAlign: 'center', padding: '60px 20px' }}>
@@ -319,13 +469,23 @@ export default function DashboardPage() {
                   />
                 </circle>
               </svg>
-              <p className="loading-text">Loading your musical chronicle...</p>
+              <p className="loading-text">Loading your music data...</p>
             </div>
           )}
 
-          {/* Tracks List */}
-          {!loading && topTracks.length > 0 && (
+          {/* Tracks View */}
+          {!loading && activeView === 'tracks' && topTracks.length > 0 && (
             <div style={{ padding: '0 20px' }}>
+              <h2 style={{
+                fontFamily: 'Playfair Display, serif',
+                fontSize: '1.8rem',
+                color: '#1DB954',
+                marginBottom: '25px',
+                textAlign: 'center',
+                letterSpacing: '0.05em'
+              }}>
+                {getTimeRangeLabel(timeRange)} - Top Tracks
+              </h2>
               <ul style={{ 
                 listStyle: 'none', 
                 padding: 0, 
@@ -335,16 +495,38 @@ export default function DashboardPage() {
                 marginRight: 'auto'
               }}>
                 {topTracks.map((track, index) => (
-                  <li key={track.id} className="track-item" style={{ position: 'relative' }}>
-                    <span className="track-number">{String(index + 1).padStart(2, '0')}</span>
-                    <div className="track-name">{track.name}</div>
-                    <div className="track-artists">
-                      {track.artists.map((a: any) => a.name).join(', ')}
+                  <li key={track.id} className="item-card" style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '15px' }}>
+                    <span className="item-number">{String(index + 1).padStart(2, '0')}</span>
+
+                    {track.album?.images?.[0] && (
+                      <img
+                        src={track.album.images[0].url}
+                        alt={track.name}
+                        style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '8px', flexShrink: 0 }}
+                      />
+                    )}
+
+                    <div style={{ flex: 1 }}>
+                      <div className="item-name">{track.name}</div>
+                      <div className="item-subtitle">
+                        {track.artists.map((a: any) => a.name).join(', ')}
+                      </div>
                     </div>
-                    
-                    {/* Corner decorations */}
-                    <svg style={{ position: 'absolute', top: '5px', right: '5px', width: '15px', height: '15px', opacity: 0.3 }} viewBox="0 0 15 15">
-                      <path d="M0,0 L15,0 L15,1 L1,1 L1,15 L0,15 Z" fill="#1DB954"/>
+
+                    <div style={{ 
+                      fontFamily: 'Cormorant Garamond, serif',
+                      fontSize: '1rem',
+                      color: '#666',
+                      flexShrink: 0
+                    }}>
+                      {formatDuration(track.duration_ms)}
+                    </div>
+
+                    <svg
+                      style={{ position: 'absolute', top: '5px', right: '5px', width: '15px', height: '15px', opacity: 0.3 }}
+                      viewBox="0 0 15 15"
+                    >
+                      <path d="M0,0 L15,0 L15,1 L1,1 L1,15 L0,15 Z" fill="#1DB954" />
                     </svg>
                   </li>
                 ))}
@@ -352,8 +534,69 @@ export default function DashboardPage() {
             </div>
           )}
 
-          {/* No Tracks State */}
-          {!loading && topTracks.length === 0 && (
+          {/* Artists View */}
+          {!loading && activeView === 'artists' && topArtists.length > 0 && (
+            <div style={{ padding: '0 20px' }}>
+              <h2 style={{
+                fontFamily: 'Playfair Display, serif',
+                fontSize: '1.8rem',
+                color: '#1DB954',
+                marginBottom: '25px',
+                textAlign: 'center',
+                letterSpacing: '0.05em'
+              }}>
+                {getTimeRangeLabel(timeRange)} - Top Artists
+              </h2>
+              <ul style={{ 
+                listStyle: 'none', 
+                padding: 0, 
+                margin: 0,
+                maxWidth: '900px',
+                marginLeft: 'auto',
+                marginRight: 'auto'
+              }}>
+                {topArtists.map((artist, index) => (
+                  <li key={artist.id} className="item-card" style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '15px' }}>
+                    <span className="item-number">{String(index + 1).padStart(2, '0')}</span>
+
+                    {artist.images?.[0] && (
+                      <img
+                        src={artist.images[0].url}
+                        alt={artist.name}
+                        style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '50%', flexShrink: 0 }}
+                      />
+                    )}
+
+                    <div style={{ flex: 1 }}>
+                      <div className="item-name">{artist.name}</div>
+                      <div className="item-subtitle">
+                        {artist.genres?.slice(0, 3).join(', ') || 'Artist'}
+                      </div>
+                    </div>
+
+                    <div style={{ 
+                      fontFamily: 'Cormorant Garamond, serif',
+                      fontSize: '1rem',
+                      color: '#666',
+                      flexShrink: 0
+                    }}>
+                      {artist.followers?.total?.toLocaleString()} followers
+                    </div>
+
+                    <svg
+                      style={{ position: 'absolute', top: '5px', right: '5px', width: '15px', height: '15px', opacity: 0.3 }}
+                      viewBox="0 0 15 15"
+                    >
+                      <path d="M0,0 L15,0 L15,1 L1,1 L1,15 L0,15 Z" fill="#1DB954" />
+                    </svg>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* No Data State */}
+          {!loading && topTracks.length === 0 && topArtists.length === 0 && (
             <div style={{ textAlign: 'center', padding: '60px 20px' }}>
               <svg width="60" height="60" viewBox="0 0 60 60" style={{ marginBottom: '20px', opacity: 0.3 }}>
                 <path d="M30,5 L55,30 L30,55 L5,30 Z" fill="none" stroke="#1DB954" strokeWidth="2"/>
@@ -363,13 +606,12 @@ export default function DashboardPage() {
                 fontSize: '1.3rem',
                 color: '#666'
               }}>
-                No tracks found. Please log in to view your top tracks.
+                No data found. Please log in to view your music statistics.
               </p>
             </div>
           )}
         </div>
 
-        {/* Bottom Glow Effects */}
         <div style={{
           position: 'fixed',
           bottom: '10%',
@@ -383,5 +625,4 @@ export default function DashboardPage() {
         }}></div>
       </div>
     </>
-  );
-}
+  );}

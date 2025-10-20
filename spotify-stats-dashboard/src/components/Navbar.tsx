@@ -96,7 +96,7 @@ export default function Navbar() {
             </svg>
             
             <Link href="/" className="nav-logo">
-              DataGrabber
+              SpotLight
             </Link>
 
             {/* Decorative diamond */}
