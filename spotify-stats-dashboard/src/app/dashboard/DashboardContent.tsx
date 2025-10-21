@@ -13,20 +13,16 @@ export default function DashboardPage() {
   const router = useRouter();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [mounted, setMounted] = useState(false);
+  const [token, setToken] = useState<string | null>(null);
   
-
+  // First useEffect: Handle mounting and get token from localStorage
   useEffect(() => {
     setMounted(true);
+    const storedToken = localStorage.getItem('spotify_access_token');
+    setToken(storedToken);
   }, []);
 
- const token = localStorage.getItem('spotify_access_token');
-
-if (!mounted) return <div className="text-[#1DB954] p-10">Loading dashboard...</div>;
-if (!token) return <div className="text-[#1DB954] p-10">Please log in with Spotify to view your dashboard.</div>;
-
-
-
-
+  // Second useEffect: Canvas animation
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -117,19 +113,20 @@ if (!token) return <div className="text-[#1DB954] p-10">Please log in with Spoti
     };
   }, []);
 
-useEffect(() => {
-  const tokenFromQuery = searchParams?.get('access_token');
-  if (tokenFromQuery) {
-    localStorage.setItem('spotify_access_token', tokenFromQuery);
-    router.replace('/dashboard');
-    return;
-  }
+  // Third useEffect: Fetch data from API
+  useEffect(() => {
+    const tokenFromQuery = searchParams?.get('access_token');
+    if (tokenFromQuery) {
+      localStorage.setItem('spotify_access_token', tokenFromQuery);
+      setToken(tokenFromQuery);
+      router.replace('/dashboard');
+      return;
+    }
 
-  const token = localStorage.getItem('spotify_access_token');
-  if (!token) {
-    setLoading(false);
-    return; // 🔒 Exit early if not logged in
-  }
+    if (!token) {
+      setLoading(false);
+      return;
+    }
 
     const fetchData = async () => {
       try {
@@ -155,8 +152,7 @@ useEffect(() => {
     };
 
     fetchData();
-  }, [searchParams, router, timeRange]);
-
+  }, [searchParams, router, timeRange, token]);
 
   const getTimeRangeLabel = (range: string) => {
     switch (range) {
@@ -180,6 +176,15 @@ useEffect(() => {
     const minutes = Math.floor((total % 3600000) / 60000);
     return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
   };
+
+  // Early returns AFTER all hooks
+  if (!mounted) {
+    return <div className="text-[#1DB954] p-10">Loading dashboard...</div>;
+  }
+
+  if (!token) {
+    return <div className="text-[#1DB954] p-10">Please log in with Spotify to view your dashboard.</div>;
+  }
 
   return (
     <>
@@ -634,4 +639,5 @@ useEffect(() => {
         }}></div>
       </div>
     </>
-  );}
+  );
+}
