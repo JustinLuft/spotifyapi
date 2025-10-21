@@ -3,6 +3,7 @@
 ![License](https://img.shields.io/badge/License-MIT-green) ![Next.js](https://img.shields.io/badge/Next.js-13-blue) ![React](https://img.shields.io/badge/React-18.2.0-blue) ![Node.js](https://img.shields.io/badge/Node.js-18.x-green) 
 
 A modern, interactive dashboard to explore your Spotify listening habits. Visualize your top tracks through connecting to Spotify's API.
+
 LIVE DEPLOYMENT: https://spotifyapi-omega.vercel.app/
 
 ---
