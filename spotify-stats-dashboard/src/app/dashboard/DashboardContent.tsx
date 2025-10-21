@@ -13,18 +13,17 @@ export default function DashboardPage() {
   const router = useRouter();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [mounted, setMounted] = useState(false);
+  
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  if (!mounted) {
-  return (
-    <div className="text-[#1DB954] p-10">
-      Loading dashboard...
-    </div>
-  );
-}
+ const token = localStorage.getItem('spotify_access_token');
+
+if (!mounted) return <div className="text-[#1DB954] p-10">Loading dashboard...</div>;
+if (!token) return <div className="text-[#1DB954] p-10">Please log in with Spotify to view your dashboard.</div>;
+
 
 
 
@@ -118,23 +117,19 @@ export default function DashboardPage() {
     };
   }, []);
 
- useEffect(() => {
-    if (!searchParams) return;
+useEffect(() => {
+  const tokenFromQuery = searchParams?.get('access_token');
+  if (tokenFromQuery) {
+    localStorage.setItem('spotify_access_token', tokenFromQuery);
+    router.replace('/dashboard');
+    return;
+  }
 
-    const tokenFromQuery = searchParams.get('access_token');
-    if (tokenFromQuery) {
-      localStorage.setItem('spotify_access_token', tokenFromQuery);
-      router.replace('/dashboard');
-    }
-
-    const token = localStorage.getItem('spotify_access_token');
-    console.log('Access token from localStorage:', token);
-
-    if (!token) {
-      console.log('No access token found. Make sure you are logged in.');
-      setLoading(false);
-      return;
-    }
+  const token = localStorage.getItem('spotify_access_token');
+  if (!token) {
+    setLoading(false);
+    return; // 🔒 Exit early if not logged in
+  }
 
     const fetchData = async () => {
       try {
@@ -150,8 +145,8 @@ export default function DashboardPage() {
         console.log('Top tracks response:', tracksRes.data);
         console.log('Top artists response:', artistsRes.data);
         
-        setTopTracks(tracksRes.data);
-        setTopArtists(artistsRes.data);
+        setTopTracks(tracksRes.data || []);
+        setTopArtists(artistsRes.data || []);
         setLoading(false);
       } catch (err) {
         console.error(err);
